@@ -1,0 +1,103 @@
+---
+# Source: ui/templates/configmap-xml.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+ name: react-ui-config-xml
+ labels:
+  app:
+    app: react-ui
+    env: prod
+data:
+  app.xml: |
+  
+    <receivers>
+      <topic>
+        <options type="receiver">
+          <option name="ordered_delivery" order="deny,allow">
+            <deny>0</deny>
+          </option>
+        </options>
+      </topic>
+    </receivers>
+---
+# Source: ui/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+ name: react-ui-config
+ labels:
+  app:
+    app: react-ui
+    env: prod
+data:
+ config.yaml: |
+    database:
+      ip: 120.21.31.10
+      name: ui-prod
+    logfile: /app/var/log.txt
+    timeout: 2s
+---
+# Source: ui/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: ui-service
+  labels:
+    app: react-ui
+    env: prod
+spec:
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+  selector:
+    app: react-ui
+  type: NodePort
+---
+# Source: ui/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: react-ui-dep
+  labels:
+    app: react-ui
+    env: prod
+spec:
+  replicas: 6
+  selector:
+    matchLabels:
+      app: react-ui
+  template:
+    metadata:
+      labels:
+        app: react-ui
+        env: prod
+    spec:
+      containers:
+        - name: react-ui
+          image: deekshithsn/ui
+          imagePullPolicy: IfNotPresent
+          resources:
+            limits:
+              cpu: 4
+              memory: 16Gi
+            requests:
+              cpu: 4
+              memory: 16Gi
+---
+# Source: ui/templates/hpa.yaml
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  annotations:
+    app: react-ui
+    env: prod
+spec:
+  maxReplicas: 10
+  minReplicas: 4
+  scaleTargetRef:
+    apiVersion: extensions/v1
+    kind: Deployment
+    name: react-ui
+  targetCPUUtilizationPercentage: 90

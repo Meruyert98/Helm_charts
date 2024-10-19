@@ -1,0 +1,2 @@
+# Ignore Helm template files
+ui/templates/*
